@@ -153,11 +153,11 @@ class Page(object):
 	def load(self):
 		for callback in self.load_observers:
 			callback()
-		#print("Loading " + str(self.name) + " page")
+		print("Loading " + str(self.name) + " page")
 		self.stack.set_visible_child(self.page)
 
 	def unload(self):
-		#print("Unoading " + str(self.name) + " page")
+		print("Unoading " + str(self.name) + " page")
 		for callback in self.unload_observers:
 			callback()
 
@@ -167,33 +167,34 @@ class Page(object):
 		elif key=="unload":
 			self.unload_observers.append(cb)
 
-class MenuPage(Page):
+class MenuPage(Page): 
 	def stub_method(self):
 		print("Stub method in Menu page")
 
 class VideoPage(Page):
 	def __init__(self, page, name="VideoPage", window=None):
 		super(VideoPage, self).__init__(page, name)
+		Gst.init(None)
 		self.movie_window = Gtk.DrawingArea()
 		self.window = window
+		
+		self.player = Gst.ElementFactory.make("playbin", None)
+		self.player.set_property("uri", "http://192.168.3.7:8080/?action=stream")
 
-		'''
-		self.player = Gst.ElementFactory.make("playbin", "player")
-		self.player.set_property("uri", "http://192.168.3.14:8080/?action=stream")
 		bus = self.player.get_bus()
 		bus.add_signal_watch()
 		bus.enable_sync_message_emission()
 		bus.connect("message", self.on_message)
 		bus.connect("sync-message::element", self.on_sync_message)
-		'''
 
 	def load(self):
 		super(VideoPage, self).load()
-		#self.start_video()
+		print("player: " + str(self.player))
+		self.start_video()
 
 	def unload(self):
 		super(VideoPage, self).unload()
-		#self.stop_video()
+		self.stop_video()
 
 	def add_video(self, btn):
 		self.video_player = video_mod.VideoPlayer(self.window)
@@ -214,19 +215,21 @@ class VideoPage(Page):
 			print "Error: %s" % err, debug
 			self.button.set_label("Start")
 		'''
-		
+	
 	def on_sync_message(self, bus, message):
 		print "On sync message"
 		if message.get_structure().get_name() == 'prepare-window-handle':
 			imagesink = message.src
 			imagesink.set_property("force-aspect-ratio", True)
-			imagesink.set_window_handle(self.window1.get_property('window').get_xid())
+			imagesink.set_window_handle(self.window.get_property('window').get_xid())
 			self.imagesink = imagesink
 
 	def start_video(self):
+		print("start video")
 		self.player.set_state(Gst.State.PLAYING)
 
 	def stop_video(self):
+		print("stop video")
 		self.player.set_state(Gst.State.PAUSED)
 
 class SensorPage(Page):
