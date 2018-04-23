@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+
 from collections import MutableMapping
+
+AVG_LENGTH = 10
 
 class SensorDB(MutableMapping, dict):
     def __init__(self):
@@ -37,22 +41,33 @@ class SensorDB(MutableMapping, dict):
         return print_str
 
 class Sensor(object):
-    def __init__(self, name=None):
+    def __init__(self, address, name=None):
+        if name==None:
+            name = address
         self.name = name
         self.path = None
-        self.svc_path = None
+        #self.svc_path = None
         self.chrc_path = None
         self.object = None
         self.canvas = None
-        self.address = None
         self.value_list = []
         self.avg_value = 0
-
+        self.address = address
         self._position = None        
         self._active = False
         self._connected = False
         self._value = 0
         self._observers = []
+        self._present = False
+
+    @property
+    def present(self):
+        return self._present
+
+    @present.setter
+    def present(self, p):
+        self._present = p
+        self.call_cb("present", p)
 
     @property
     def value(self):
@@ -92,7 +107,7 @@ class Sensor(object):
         self.call_cb("active", active)
 
     def update_avg(self):
-        if (len(self.value_list) > 5):
+        if (len(self.value_list) > AVG_LENGTH):
             del(self.value_list[0])
         self.value_list.append(self._value)
         self.avg_value = sum(self.value_list)/len(self.value_list)
@@ -109,12 +124,12 @@ class Sensor(object):
         for observer in self._observers:
             if key == observer['var']:
                 observer["callback"](self, key, value)
-
+    """
     def __str__(self):
         return str(self.name)
-
+    """
 if __name__ == '__main__':
-    def test_cb(key, value=None):
+    def test_cb(self, key, value=None):
         print("cb... " + str(key) + ": " + str(value))
 
     a = SensorDB()
